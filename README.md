@@ -103,8 +103,38 @@ C:\Users\USERNAME\.aws\amazonq\agents\default.json
 - "安装npm包 @modelcontextprotocol/server-brave-search"
 
 ### 搜索MCP服务器
-- "搜索天气相关的MCP服务器"
-- "查找可用的MCP工具"
+
+**重要：搜索功能需要GitHub Token配置**
+
+1. **配置GitHub Token**：
+   - 访问 https://github.com/settings/tokens
+   - 点击 "Generate new token (classic)"
+   - 选择 "public_repo" 权限
+   - 复制生成的token
+
+2. **添加Token到配置**：
+   编辑 `~/.aws/amazonq/agents/default.json`，在 `amazonq-mcp-installer` 配置中添加环境变量：
+   ```json
+   {
+     "mcpServers": {
+       "amazonq-mcp-installer": {
+         "command": "node",
+         "disabled": false,
+         "timeout": 60000,
+         "args": [
+           "C:\\\\Users\\\\USERNAME\\\\.aws\\\\amazonq\\\\MCP\\\\amazonq-mcp-installer\\\\build\\\\index.js"
+         ],
+         "env": {
+           "GITHUB_TOKEN": "your_github_token_here"
+         }
+       }
+     }
+   }
+   ```
+
+3. **使用搜索功能**：
+   - "搜索天气相关的MCP服务器"
+   - "查找sqlite相关的MCP工具"
 
 ### 卸载MCP服务器
 - "卸载 qweather-mcp 服务器"
@@ -145,6 +175,7 @@ C:\Users\USERNAME\.aws\amazonq\agents\default.json
 - Node.js (用于Node.js MCP服务器)
 - Python + UV (用于Python MCP服务器)
 - Amazon Q已安装并配置
+- GitHub Token (用于搜索功能，可选)
 
 ## 与通用版本的区别
 
