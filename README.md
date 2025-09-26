@@ -8,8 +8,12 @@ Amazon Q专用的MCP服务器安装和管理工具。自动安装MCP服务器并
 
 首先需要将这个工具本身安装为MCP服务器：
 
-1. **克隆仓库**：
+1. **克隆仓库到Amazon Q的MCP目录**：
 ```bash
+# 进入Amazon Q的MCP目录
+cd C:\Users\wyuhang\.aws\amazonq\MCP\
+
+# 克隆仓库
 git clone https://github.com/bonjourzzz/amazonq-mcp-installer.git
 cd amazonq-mcp-installer
 ```
@@ -28,7 +32,7 @@ npm run build
   - **Name**: `amazonq-mcp-installer`
   - **Transport**: `stdio`
   - **Command**: `node`
-  - **Arguments**: `C:\Users\wyuhang\.aws\amazonq\MCP\mcp-easy-installer\build\index.js`
+  - **Arguments**: `C:\Users\wyuhang\.aws\amazonq\MCP\amazonq-mcp-installer\build\index.js`
   - **Timeout**: `60`
   - **Scope**: `Global` 或 `This workspace`
 
@@ -42,7 +46,7 @@ npm run build
       "disabled": false,
       "timeout": 60000,
       "args": [
-        "C:\\\\Users\\\\wyuhang\\\\.aws\\\\amazonq\\\\MCP\\\\mcp-easy-installer\\\\build\\\\index.js"
+        "C:\\\\Users\\\\wyuhang\\\\.aws\\\\amazonq\\\\MCP\\\\amazonq-mcp-installer\\\\build\\\\index.js"
       ]
     }
   },
