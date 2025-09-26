@@ -69,9 +69,17 @@ export async function installMcpServer(repoUrl: string): Promise<InstallResult> 
   const configHandler = new AmazonQConfigHandler();
   debugLog(`Starting installation for repository: ${repoUrl}`);
 
-  // Check dependencies
-  const hasNode = await hasNodeJs();
+  // Check dependencies with version requirements
+  let hasNode = await hasNodeJs();
   const hasPython = await hasUvx();
+  
+  // Check for projects with specific Node.js version requirements
+  if (repoUrl.includes('chrome-devtools-mcp')) {
+    hasNode = await hasNodeJs('22.12');
+    if (!hasNode) {
+      throw new Error('chrome-devtools-mcp requires Node.js 22.12.0 or newer. Please upgrade your Node.js version.');
+    }
+  }
 
   let repoName = '';
   let installDir = '';
@@ -220,8 +228,8 @@ export async function installMcpServer(repoUrl: string): Promise<InstallResult> 
         }
 
         if (!entryPoint) {
-          // Search in common locations
-          const searchPaths = ['dist', 'build', '', 'src'];
+          // Search in common locations, prioritizing build/src for chrome-devtools-mcp style projects
+          const searchPaths = ['build/src', 'dist', 'build', '', 'src'];
           for (const searchPath of searchPaths) {
             const files = await glob('**/index.js', {
               cwd: path.join(installDir, searchPath),
@@ -229,6 +237,7 @@ export async function installMcpServer(repoUrl: string): Promise<InstallResult> 
             });
             if (files.length > 0) {
               entryPoint = path.join(searchPath, files[0]);
+              debugLog(`Found entry point: ${entryPoint}`);
               break;
             }
           }

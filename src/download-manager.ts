@@ -6,10 +6,16 @@ import { debugLog } from './logger.js';
 
 // System verification utilities
 
-export async function hasNodeJs() {
+export async function hasNodeJs(minVersion?: string) {
   try {
-    await spawnPromise("node", ["--version"]);
-    return true;
+    const result = await spawnPromise("node", ["--version"]);
+    if (!minVersion) return true;
+    
+    const currentVersion = result.trim().substring(1); // Remove 'v' prefix
+    const [currentMajor, currentMinor] = currentVersion.split('.').map(Number);
+    const [minMajor, minMinor] = minVersion.split('.').map(Number);
+    
+    return currentMajor > minMajor || (currentMajor === minMajor && currentMinor >= minMinor);
   } catch (e) {
     return false;
   }
@@ -324,24 +330,20 @@ export async function cloneRepository(cloneUrl: string, targetDir: string): Prom
 export async function installNodeDependencies(directory: string): Promise<void> {
   debugLog(`Installing dependencies in ${directory}`);
   try {
-    // Initial install with --ignore-scripts to avoid prepare/postinstall issues
-    debugLog('Executing: npm install --ignore-scripts');
     const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     debugLog(`Using npm command: ${npmCmd}`);
-    await spawnPromise(npmCmd, ['install', '--ignore-scripts'], { cwd: directory });
-    debugLog('Base npm install successful');
-
-    // Install dev dependencies separately
+    
+    // Try normal install first (allows scripts to run)
     try {
-      debugLog('Installing dev dependencies...');
-      await spawnPromise(npmCmd, ['install', '--save-dev', 'typescript', '@types/node'], {
-        cwd: directory,
-        env: { ...process.env, npm_config_ignore_scripts: "true" }
-      });
-      debugLog('Dev dependencies installed');
-    } catch (devError) {
-      debugLog(`Dev dependencies installation failed: ${devError instanceof Error ? devError.message : String(devError)}`);
-      // Continue since dev dependencies might already be in the package
+      debugLog('Executing: npm install');
+      await spawnPromise(npmCmd, ['install'], { cwd: directory });
+      debugLog('npm install successful');
+    } catch (installError) {
+      debugLog(`Normal install failed: ${installError instanceof Error ? installError.message : String(installError)}`);
+      // Fallback to install with --ignore-scripts
+      debugLog('Trying fallback: npm install --ignore-scripts');
+      await spawnPromise(npmCmd, ['install', '--ignore-scripts'], { cwd: directory });
+      debugLog('Fallback install successful');
     }
   } catch (error) {
     debugLog(`Error during dependency installation: ${error instanceof Error ? error.message : String(error)}`);
@@ -369,21 +371,15 @@ export async function buildNodeProject(directory: string, packageJson: PackageJs
       const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
       debugLog(`Using npm command: ${npmCmd} for build`);
       
-      // On Windows, try to handle the shx chmod issue
-      if (process.platform === 'win32') {
-        // Try to build with cmd.exe and ignore script errors
-        await spawnPromise(npmCmd, ['run', 'build'], {
-          cwd: directory,
-          env: {
-            ...process.env,
-            npm_config_script_shell: "C:\\Windows\\System32\\cmd.exe",
-            npm_config_ignore_scripts: "true"
-          }
-        });
-      } else {
-        // On Unix systems, run build normally
-        await spawnPromise(npmCmd, ['run', 'build'], { cwd: directory });
-      }
+      // Run build normally, allowing scripts to execute
+      await spawnPromise(npmCmd, ['run', 'build'], { 
+        cwd: directory,
+        env: {
+          ...process.env,
+          // Set NODE_ENV to production for better builds
+          NODE_ENV: 'production'
+        }
+      });
       
       debugLog('npm run build successful');
     } catch (error) {
