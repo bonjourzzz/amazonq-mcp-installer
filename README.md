@@ -8,11 +8,29 @@
 
 ### 1. 环境准备
 
-确保已安装以下环境：
-- **Node.js** (必需)
-- **Git** (必需)
-- **Amazon Q插件** (必需)
-- **Python + UV** (可选，仅Python MCP服务器需要)
+#### 必需环境
+
+**Node.js**
+- 下载：https://nodejs.org/
+- 选择LTS版本，按默认选项安装
+- 验证：打开命令行输入 `node --version`
+
+**Git**
+- 下载：https://git-scm.com/download/windows
+- 按默认选项安装
+- 验证：打开命令行输入 `git --version`
+
+**Amazon Q插件**
+- 在VS Code中搜索并安装 "Amazon Q" 插件
+- 登录你的AWS账户
+- 确保插件正常工作
+
+#### 可选环境（仅Python MCP服务器需要）
+
+**Python + UV**
+- Python下载：https://www.python.org/downloads/
+- 安装UV：`pip install uv`
+- 验证：`python --version` 和 `uv --version`
 
 ### 2. 安装MCP Installer
 
