@@ -20,25 +20,37 @@ npm install
 npm run build
 ```
 
-3. **手动配置Amazon Q**：
+3. **配置Amazon Q**（两种方法任选其一）：
+
+**方法一：通过Amazon Q插件界面添加**
+- 打开Amazon Q插件设置
+- 添加新的MCP服务器，配置如下：
+  - **Name**: `amazonq-mcp-installer`
+  - **Transport**: `stdio`
+  - **Command**: `node`
+  - **Arguments**: `C:\Users\wyuhang\.aws\amazonq\MCP\mcp-easy-installer\build\index.js`
+  - **Timeout**: `60`
+  - **Scope**: `Global` 或 `This workspace`
+
+**方法二：手动编辑配置文件**
 编辑 `~/.aws/amazonq/agents/default.json`，添加：
 ```json
 {
   "mcpServers": {
-    "mcp-easy-installer": {
+    "amazonq-mcp-installer": {
       "command": "node",
       "disabled": false,
       "timeout": 60000,
       "args": [
-        "完整路径/amazonq-mcp-installer/build/index.js"
+        "C:\\\\Users\\\\wyuhang\\\\.aws\\\\amazonq\\\\MCP\\\\mcp-easy-installer\\\\build\\\\index.js"
       ]
     }
   },
   "tools": [
-    "@mcp-easy-installer"
+    "@amazonq-mcp-installer"
   ],
   "allowedTools": [
-    "@mcp-easy-installer/*"
+    "@amazonq-mcp-installer/*"
   ]
 }
 ```
