@@ -1,0 +1,28 @@
+{
+  "name": "amazonq-mcp-installer",
+  "version": "1.0.0",
+  "description": "Amazon Q MCP server installer and manager. Automatically installs MCP servers and configures Amazon Q default.json.",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "test": "npm run build && npm start install https://github.com/overstarry/qweather-mcp"
+  },
+  "keywords": ["mcp", "amazonq", "installer", "model-context-protocol"],
+  "author": "Amazon Q MCP Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "@octokit/rest": "^21.1.1",
+    "glob": "^10.3.10",
+    "tar": "^6.2.1",
+    "spawn-rx": "^5.1.2",
+    "@iarna/toml": "^2.2.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
