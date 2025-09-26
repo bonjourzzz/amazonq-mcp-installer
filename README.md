@@ -1,6 +1,8 @@
 # Amazon Q MCP Installer
 
-Amazon Q专用的MCP服务器安装和管理工具。自动安装MCP服务器并配置Amazon Q的default.json文件。
+**专为Amazon Q插件设计的MCP服务器安装和管理工具**。自动安装MCP服务器并配置Amazon Q的default.json文件。
+
+> ⚠️ **重要说明**：此工具专门为Amazon Q插件定制，不适用于Claude Desktop、Cursor等其他MCP客户端。如需通用版本，请使用原始的MCP Easy Installer。
 
 ## 快速开始
 
@@ -146,10 +148,13 @@ C:\Users\USERNAME\.aws\amazonq\agents\default.json
 
 ## 与通用版本的区别
 
-1. **专用安装路径**: 使用Amazon Q的MCP目录
-2. **配置格式**: 遵循Amazon Q的配置规则
-3. **权限管理**: 自动添加工具权限
-4. **环境变量**: 正确处理Amazon Q的env配置
+此工具是原始MCP Easy Installer的Amazon Q专用版本，主要区别：
+
+1. **专用安装路径**: 使用Amazon Q的MCP目录 (`~/.aws/amazonq/MCP/`)
+2. **配置格式**: 遵循Amazon Q的配置规则和JSON结构
+3. **权限管理**: 自动添加 `tools` 和 `allowedTools` 配置
+4. **环境变量**: 正确处理Amazon Q的 `env` 配置格式
+5. **必需字段**: 自动添加 `disabled: false`, `timeout: 60000` 等必需字段
 
 ## 故障排除
 
