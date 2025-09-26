@@ -2,15 +2,20 @@
 
 **专为Amazon Q插件设计的MCP服务器安装和管理工具**。自动安装MCP服务器并配置Amazon Q的default.json文件。
 
-> ⚠️ **重要说明**：此工具专门为Amazon Q插件定制，不适用于Claude Desktop、Cursor等其他MCP客户端。如需通用版本，请使用原始的MCP Easy Installer。
+> ⚠️ **重要说明**：此工具专门为Amazon Q插件定制，不适用于Claude Desktop、Cursor等其他MCP客户端。
 
-## 快速开始
+## 安装步骤
 
-### 第一步：安装MCP Easy Installer
+### 1. 环境准备
 
-首先需要将这个工具本身安装为MCP服务器：
+确保已安装以下环境：
+- **Node.js** (必需)
+- **Git** (必需)
+- **Amazon Q插件** (必需)
+- **Python + UV** (可选，仅Python MCP服务器需要)
 
-1. **克隆仓库到Amazon Q的MCP目录**：
+### 2. 安装MCP Installer
+
 ```bash
 # 进入Amazon Q的MCP目录
 cd C:\Users\USERNAME\.aws\amazonq\MCP\
@@ -18,28 +23,16 @@ cd C:\Users\USERNAME\.aws\amazonq\MCP\
 # 克隆仓库
 git clone https://github.com/bonjourzzz/amazonq-mcp-installer.git
 cd amazonq-mcp-installer
-```
 
-2. **安装依赖并构建**：
-```bash
+# 安装依赖并构建
 npm install
 npm run build
 ```
 
-3. **配置Amazon Q**（两种方法任选其一）：
+### 3. 配置Amazon Q
 
-**方法一：通过Amazon Q插件界面添加**
-- 打开Amazon Q插件设置
-- 添加新的MCP服务器，配置如下：
-  - **Name**: `amazonq-mcp-installer`
-  - **Transport**: `stdio`
-  - **Command**: `node`
-  - **Arguments**: `C:\Users\USERNAME\.aws\amazonq\MCP\amazonq-mcp-installer\build\index.js`
-  - **Timeout**: `60`
-  - **Scope**: `Global` 或 `This workspace`
+编辑配置文件 `C:\Users\USERNAME\.aws\amazonq\agents\default.json`：
 
-**方法二：手动编辑配置文件**
-编辑 `~/.aws/amazonq/agents/default.json`，添加：
 ```json
 {
   "mcpServers": {
@@ -61,139 +54,130 @@ npm run build
 }
 ```
 
-4. **重启Amazon Q**，现在你就可以使用MCP安装工具了！
+### 4. 配置GitHub Token（可选）
 
-### 第二步：使用工具安装其他MCP服务器
+如需使用搜索功能，需要配置GitHub Token：
 
-## 主要功能
-
-- **搜索和发现**: 从GitHub仓库和npm包中查找可用的MCP服务器
-- **自动安装**: 从GitHub URL或npm包快速安装MCP服务器
-- **Amazon Q集成**: 自动更新Amazon Q的配置文件 (`~/.aws/amazonq/agents/default.json`)
-- **环境依赖管理**: 自动处理Node.js和Python依赖
-- **修复和维护**: 检测并修复常见的MCP服务器问题
-- **跨平台支持**: 支持Windows、Linux和macOS
-
-## 安装目录
-
-MCP服务器将安装到以下目录：
-```
-C:\Users\USERNAME\.aws\amazonq\MCP\
-```
-
-## 配置更新
-
-工具会自动更新Amazon Q的配置文件：
-```
-C:\Users\USERNAME\.aws\amazonq\agents\default.json
-```
-
-按照Amazon Q配置规则添加：
-- `mcpServers`: 服务器配置
-- `tools`: 工具声明
-- `allowedTools`: 权限控制
-- 必需字段：`disabled: false`, `timeout: 60000`
-
-## 使用方法
-
-现在你可以在Amazon Q中直接使用命令安装其他MCP服务器：
-
-### 安装MCP服务器
-- "帮我安装 https://github.com/overstarry/qweather-mcp"
-- "安装npm包 @modelcontextprotocol/server-brave-search"
-
-### 搜索MCP服务器
-
-**重要：搜索功能需要GitHub Token配置**
-
-1. **配置GitHub Token**：
+1. **获取Token**：
    - 访问 https://github.com/settings/tokens
    - 点击 "Generate new token (classic)"
    - 选择 "public_repo" 权限
    - 复制生成的token
 
-2. **添加Token到配置**：
-   编辑 `~/.aws/amazonq/agents/default.json`，在 `amazonq-mcp-installer` 配置中添加环境变量：
+2. **添加到配置**：
+   在上述配置中的 `amazonq-mcp-installer` 部分添加：
    ```json
    {
-     "mcpServers": {
-       "amazonq-mcp-installer": {
-         "command": "node",
-         "disabled": false,
-         "timeout": 60000,
-         "args": [
-           "C:\\\\Users\\\\USERNAME\\\\.aws\\\\amazonq\\\\MCP\\\\amazonq-mcp-installer\\\\build\\\\index.js"
-         ],
-         "env": {
-           "GITHUB_TOKEN": "your_github_token_here"
-         }
+     "amazonq-mcp-installer": {
+       "command": "node",
+       "disabled": false,
+       "timeout": 60000,
+       "args": ["..."],
+       "env": {
+         "GITHUB_TOKEN": "your_github_token_here"
        }
      }
    }
    ```
 
-3. **使用搜索功能**：
-   - "搜索天气相关的MCP服务器"
-   - "查找sqlite相关的MCP工具"
+### 5. 重启Amazon Q
+
+重启Amazon Q插件使配置生效。
+
+## 使用方法
+
+### 安装MCP服务器
+```
+帮我安装 https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+安装npm包 @modelcontextprotocol/server-brave-search
+```
+
+### 搜索MCP服务器（需要GitHub Token）
+```
+搜索sqlite相关的MCP服务器
+查找天气相关的MCP工具
+```
 
 ### 卸载MCP服务器
-- "卸载 qweather-mcp 服务器"
+```
+卸载 filesystem 服务器
+```
 
 ### 修复MCP服务器
-- "修复 qweather 服务器，原始URL是 https://github.com/overstarry/qweather-mcp"
+```
+修复 filesystem 服务器，原始URL是 https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+```
+
+## 目录结构
+
+```
+C:\Users\USERNAME\.aws\amazonq\
+├── MCP\                          # MCP服务器安装目录
+│   ├── amazonq-mcp-installer\    # 本工具
+│   ├── server-filesystem\        # 已安装的MCP服务器
+│   └── ...
+└── agents\
+    └── default.json              # Amazon Q配置文件
+```
 
 ## 配置示例
 
-安装后，Amazon Q的default.json将包含类似配置：
+安装MCP服务器后，配置文件将自动更新：
 
 ```json
 {
   "mcpServers": {
-    "qweather-mcp": {
+    "amazonq-mcp-installer": {
       "command": "node",
       "disabled": false,
       "timeout": 60000,
-      "args": [
-        "C:\\\\Users\\\\USERNAME\\\\.aws\\\\amazonq\\\\MCP\\\\qweather-mcp\\\\dist\\\\index.js"
-      ],
+      "args": ["C:\\\\Users\\\\USERNAME\\\\.aws\\\\amazonq\\\\MCP\\\\amazonq-mcp-installer\\\\build\\\\index.js"],
       "env": {
-        "QWEATHER_API_KEY": "your_api_key"
+        "GITHUB_TOKEN": "your_token"
       }
+    },
+    "@modelcontextprotocol/server-filesystem": {
+      "command": "node",
+      "disabled": false,
+      "timeout": 60000,
+      "args": ["C:\\\\Users\\\\USERNAME\\\\.aws\\\\amazonq\\\\MCP\\\\server-filesystem\\\\dist\\\\index.js"]
     }
   },
   "tools": [
-    "@qweather-mcp"
+    "@amazonq-mcp-installer",
+    "@modelcontextprotocol/server-filesystem"
   ],
   "allowedTools": [
-    "@qweather-mcp/*"
+    "@amazonq-mcp-installer/*",
+    "@modelcontextprotocol/server-filesystem/*"
   ]
 }
 ```
 
-## 环境要求
-
-- Node.js (用于Node.js MCP服务器)
-- Python + UV (用于Python MCP服务器)
-- Amazon Q已安装并配置
-- GitHub Token (用于搜索功能，可选)
-
-## 与通用版本的区别
-
-此工具是原始MCP Easy Installer的Amazon Q专用版本，主要区别：
-
-1. **专用安装路径**: 使用Amazon Q的MCP目录 (`~/.aws/amazonq/MCP/`)
-2. **配置格式**: 遵循Amazon Q的配置规则和JSON结构
-3. **权限管理**: 自动添加 `tools` 和 `allowedTools` 配置
-4. **环境变量**: 正确处理Amazon Q的 `env` 配置格式
-5. **必需字段**: 自动添加 `disabled: false`, `timeout: 60000` 等必需字段
-
 ## 故障排除
 
-如果遇到问题：
-1. 确保Amazon Q已正确安装
-2. 检查配置文件路径是否存在
-3. 验证Node.js/Python环境
-4. 使用repair命令修复损坏的安装
+### 常见问题
+
+1. **工具不可用**
+   - 检查配置文件路径是否正确
+   - 确认已重启Amazon Q
+
+2. **搜索功能失败**
+   - 检查GitHub Token是否配置
+   - 确认Token权限包含 "public_repo"
+
+3. **安装失败**
+   - 检查网络连接
+   - 确认Node.js/Python环境
+
+### 手动修复
+
+如果配置损坏，可以删除并重新安装：
+```bash
+cd C:\Users\USERNAME\.aws\amazonq\MCP\
+rm -rf amazonq-mcp-installer
+# 重新执行安装步骤
+```
 
 ## 许可证
 
