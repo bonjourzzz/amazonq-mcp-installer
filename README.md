@@ -2,6 +2,51 @@
 
 Amazon Q专用的MCP服务器安装和管理工具。自动安装MCP服务器并配置Amazon Q的default.json文件。
 
+## 快速开始
+
+### 第一步：安装MCP Easy Installer
+
+首先需要将这个工具本身安装为MCP服务器：
+
+1. **克隆仓库**：
+```bash
+git clone https://github.com/bonjourzzz/amazonq-mcp-installer.git
+cd amazonq-mcp-installer
+```
+
+2. **安装依赖并构建**：
+```bash
+npm install
+npm run build
+```
+
+3. **手动配置Amazon Q**：
+编辑 `~/.aws/amazonq/agents/default.json`，添加：
+```json
+{
+  "mcpServers": {
+    "mcp-easy-installer": {
+      "command": "node",
+      "disabled": false,
+      "timeout": 60000,
+      "args": [
+        "完整路径/amazonq-mcp-installer/build/index.js"
+      ]
+    }
+  },
+  "tools": [
+    "@mcp-easy-installer"
+  ],
+  "allowedTools": [
+    "@mcp-easy-installer/*"
+  ]
+}
+```
+
+4. **重启Amazon Q**，现在你就可以使用MCP安装工具了！
+
+### 第二步：使用工具安装其他MCP服务器
+
 ## 主要功能
 
 - **搜索和发现**: 从GitHub仓库和npm包中查找可用的MCP服务器
@@ -33,26 +78,21 @@ C:\Users\USERNAME\.aws\amazonq\agents\default.json
 
 ## 使用方法
 
+现在你可以在Amazon Q中直接使用命令安装其他MCP服务器：
+
 ### 安装MCP服务器
-```bash
-npm start install https://github.com/overstarry/qweather-mcp
-npm start install https://www.npmjs.com/package/@modelcontextprotocol/server-brave-search
-```
+- "帮我安装 https://github.com/overstarry/qweather-mcp"
+- "安装npm包 @modelcontextprotocol/server-brave-search"
 
 ### 搜索MCP服务器
-```bash
-npm start search "weather mcp"
-```
+- "搜索天气相关的MCP服务器"
+- "查找可用的MCP工具"
 
 ### 卸载MCP服务器
-```bash
-npm start uninstall qweather-mcp
-```
+- "卸载 qweather-mcp 服务器"
 
 ### 修复MCP服务器
-```bash
-npm start repair qweather https://github.com/overstarry/qweather-mcp
-```
+- "修复 qweather 服务器，原始URL是 https://github.com/overstarry/qweather-mcp"
 
 ## 配置示例
 
