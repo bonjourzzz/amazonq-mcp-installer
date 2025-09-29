@@ -103,7 +103,7 @@ export class AmazonQConfigHandler {
           config.availableTools.forEach(toolName => {
             // Handle special @modelcontextprotocol/server-name format
             const allowedToolRef = serverName.startsWith('@') 
-              ? `@${serverName}/${toolName}`  // @@modelcontextprotocol/server-name/toolName
+              ? `${serverName}/${toolName}`  // @modelcontextprotocol/server-name/toolName (no extra @)
               : `@${serverName}/${toolName}`; // @serverName/toolName
             
             if (!fullConfig.allowedTools.includes(allowedToolRef)) {
@@ -112,8 +112,8 @@ export class AmazonQConfigHandler {
           });
         } else if (permissionMode === 'ask') {
           // Ask mode: remove from allowedTools (keep only in tools)
-          const serverPrefix = serverName.startsWith('@') ? `@${serverName}/` : `@${serverName}/`;
-          const wildcardRef = serverName.startsWith('@') ? `@${serverName}/*` : `@${serverName}/*`;
+          const serverPrefix = serverName.startsWith('@') ? `${serverName}/` : `@${serverName}/`;
+          const wildcardRef = serverName.startsWith('@') ? `${serverName}/*` : `@${serverName}/*`;
           
           fullConfig.allowedTools = fullConfig.allowedTools.filter(tool => 
             !tool.startsWith(serverPrefix) && tool !== wildcardRef
@@ -250,15 +250,19 @@ export class AmazonQConfigHandler {
         if (mode === 'alwaysAllow' && availableTools) {
           // Always Allow: add specific tools to allowedTools
           availableTools.forEach(toolName => {
-            const allowedToolRef = `@${serverName}/${toolName}`;
+            const allowedToolRef = serverName.startsWith('@') 
+              ? `${serverName}/${toolName}`  // @modelcontextprotocol/server-name/toolName (no extra @)
+              : `@${serverName}/${toolName}`; // @serverName/toolName
             if (!fullConfig.allowedTools.includes(allowedToolRef)) {
               fullConfig.allowedTools.push(allowedToolRef);
             }
           });
         } else if (mode === 'ask') {
           // Ask mode: remove from allowedTools
+          const serverPrefix = serverName.startsWith('@') ? `${serverName}/` : `@${serverName}/`;
+          const wildcardRef = serverName.startsWith('@') ? `${serverName}/*` : `@${serverName}/*`;
           fullConfig.allowedTools = fullConfig.allowedTools.filter(tool => 
-            !tool.startsWith(`@${serverName}/`) && tool !== `@${serverName}/*`
+            !tool.startsWith(serverPrefix) && tool !== wildcardRef
           );
         }
       }
