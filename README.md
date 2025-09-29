@@ -2,7 +2,7 @@
 
 **专为Amazon Q插件设计的MCP服务器安装和管理工具**。自动安装MCP服务器并配置Amazon Q的default.json文件。
 
-> 🎉 **v1.1.0 新特性**：README入口点自动提取，实现**100% MCP兼容性**！
+> 🎉 **v1.1.2 新特性**：集成实时工具发现，实现**真正的Always Allow模式**！
 
 ## ✨ 核心特性
 
@@ -12,15 +12,17 @@
 - ⚙️ **自动配置** - 一键更新Amazon Q配置文件
 - 🔍 **GitHub搜索** - 发现和安装GitHub上的MCP工具
 - 🛠️ **依赖管理** - 自动处理npm/uv/pip依赖安装
+- 🎛️ **实时工具发现** - 通过MCP协议自动发现所有可用工具
+- ✅ **Always Allow模式** - 新安装的MCP直接可用，无需权限询问
 
 ## 🎯 兼容性测试结果
 
-| 项目类型 | 支持情况 | 示例 |
-|---------|---------|------|
-| **Node.js/TypeScript** | ✅ 100% | server-filesystem, mem0-mcp, playwright-mcp |
-| **Python (pyproject.toml)** | ✅ 100% | perplexity-mcp |
-| **Python (requirements.txt)** | ✅ 100% | OutlookMaster-MCP |
-| **GitHub MCP生态** | ✅ 90-95% | 官方和社区MCP服务器 |
+| 项目类型 | 支持情况 | 权限模式 | 示例 |
+|---------|---------|---------|------|
+| **Node.js/TypeScript** | ✅ 100% | Always Allow | server-filesystem, mem0-mcp, playwright-mcp |
+| **Python (pyproject.toml)** | ✅ 100% | Always Allow | perplexity-mcp |
+| **Python (requirements.txt)** | ✅ 100% | Always Allow | OutlookMaster-MCP |
+| **GitHub MCP生态** | ✅ 90-95% | Always Allow | 官方和社区MCP服务器 |
 
 ## 🚀 快速开始
 
@@ -102,6 +104,42 @@ npm run build
 
 ## 🎯 智能特性
 
+### 🎛️ 实时工具发现
+自动通过MCP协议发现所有可用工具：
+```
+🔍 正在发现MCP服务器工具...
+✅ 发现 56 个工具: list_folders, compose_email, search_emails...
+📝 生成Always Allow配置
+```
+
+**工作原理**:
+1. 启动MCP服务器进程
+2. 发送 `list_tools` MCP协议请求
+3. 解析返回的工具列表
+4. 生成精确的权限配置
+
+### ✅ Always Allow模式
+新安装的MCP自动配置为直接可用：
+```json
+{
+  "tools": [
+    "@outlookmaster_mcp/list_folders",
+    "@outlookmaster_mcp/compose_email",
+    "@outlookmaster_mcp/search_emails"
+  ],
+  "allowedTools": [
+    "@outlookmaster_mcp/list_folders",
+    "@outlookmaster_mcp/compose_email", 
+    "@outlookmaster_mcp/search_emails"
+  ]
+}
+```
+
+**效果**: 
+- ✅ 直接使用，无需询问权限
+- ✅ tools和allowedTools完全对称
+- ✅ 最佳用户体验
+
 ### 📋 README入口点提取
 自动从README文件中提取入口点信息：
 ```json
@@ -142,7 +180,7 @@ C:\Users\USERNAME\.aws\amazonq\
 
 ## 🔧 配置示例
 
-安装MCP服务器后，配置文件自动更新：
+安装MCP服务器后，配置文件自动更新为Always Allow模式：
 
 ```json
 {
@@ -172,13 +210,17 @@ C:\Users\USERNAME\.aws\amazonq\
   },
   "tools": [
     "@amazonq-mcp-installer",
-    "@modelcontextprotocol/server-filesystem",
-    "@OutlookMaster-MCP"
+    "@modelcontextprotocol/server-filesystem/read_file",
+    "@modelcontextprotocol/server-filesystem/write_file",
+    "@OutlookMaster-MCP/list_folders",
+    "@OutlookMaster-MCP/compose_email"
   ],
   "allowedTools": [
     "@amazonq-mcp-installer/*",
-    "@modelcontextprotocol/server-filesystem/*",
-    "@OutlookMaster-MCP/*"
+    "@modelcontextprotocol/server-filesystem/read_file",
+    "@modelcontextprotocol/server-filesystem/write_file",
+    "@OutlookMaster-MCP/list_folders",
+    "@OutlookMaster-MCP/compose_email"
   ]
 }
 ```
@@ -199,9 +241,14 @@ C:\Users\USERNAME\.aws\amazonq\
 - 确认UV已安装：`pip install uv`
 - 检查Python环境是否正确
 
-**4. 入口点检测失败**
-- 检查README文件是否包含配置示例
-- 确认项目结构符合标准
+**4. 工具发现失败**
+- 检查MCP服务器是否正常启动
+- 确认网络连接和依赖环境
+- 查看调试日志了解具体错误
+
+**5. 权限模式异常**
+- 新安装的MCP应该自动为Always Allow模式
+- 如果仍为Ask模式，检查工具发现是否成功
 
 ### 手动修复
 
@@ -214,7 +261,13 @@ rm -rf amazonq-mcp-installer
 
 ## 🎉 更新日志
 
-### v1.1.0 (最新)
+### v1.1.2 (最新)
+- 🎛️ **集成实时工具发现** - 通过MCP协议自动发现所有工具
+- ✅ **默认Always Allow模式** - 新安装MCP直接可用
+- 🔧 **修复权限配置** - tools和allowedTools完全对称
+- 📊 **提升用户体验** - 无需手动设置权限
+
+### v1.1.1
 - 🎯 **README入口点自动提取** - 解决特殊命名问题
 - 📊 **100%兼容性达成** - 支持所有测试的MCP类型
 - 🔍 **增强工具发现** - 改进项目结构检测
@@ -236,4 +289,4 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ---
 
-**专为Amazon Q插件优化，让MCP服务器管理变得简单高效！** 🚀
+**专为Amazon Q插件优化，让MCP服务器管理变得简单高效！现在支持实时工具发现和Always Allow模式！** 🚀
