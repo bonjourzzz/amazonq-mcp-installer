@@ -1,5 +1,6 @@
 import * as path from 'path';
 import { ReadmeParser } from './readme-parser.js';
+import { discoverMcpServerTools } from './tool-discovery.js';
 import {
   hasNodeJs,
   hasUvx,
@@ -74,8 +75,8 @@ export async function installMcpServer(
   const { basePath } = ensureAmazonQMcpStructure();
   const configHandler = new AmazonQConfigHandler();
   debugLog(`Starting installation for repository: ${repoUrl}`);
-  // Default options - use alwaysAllow for better user experience
-  const { permissionMode = 'alwaysAllow', discoverTools = false } = options || {};
+  // Default options - use alwaysAllow for better user experience and enable tool discovery
+  const { permissionMode = 'alwaysAllow', discoverTools = true } = options || {};
   // Check dependencies with version requirements
   let hasNode = await hasNodeJs();
   const hasPython = await hasUvx();
@@ -340,11 +341,29 @@ export async function installMcpServer(
     }
 
     // Update Amazon Q config
+    // Update Amazon Q config
     const serverConfig = {
       command,
       args,
+      permissionMode,
       ...(envVars && { env: envVars })
     };
+
+    // Discover available tools if in alwaysAllow mode
+    if (permissionMode === "alwaysAllow" && discoverTools) {
+      try {
+        debugLog("Discovering available tools from MCP server...");
+        const availableTools = await discoverMcpServerTools(command, args, envVars || undefined, 15000);
+        debugLog(`Discovered ${availableTools.length} tools: ${availableTools.join(", ")}`);
+        
+        if (availableTools.length > 0) {
+          (serverConfig as any).availableTools = availableTools;
+        }
+      } catch (error) {
+        debugLog(`Tool discovery failed: ${error instanceof Error ? error.message : String(error)}`);
+        // Continue without tool discovery
+      }
+    }
 
     // Update Amazon Q configuration
     configHandler.updateAmazonQConfig(officialServerName, serverConfig);
