@@ -320,6 +320,18 @@ export async function installMcpServer(
     let mcpJsonResult = null;
 
     if (readmeContent) {
+      // Try to extract entry point from README for Python projects if not found yet
+      if (projectType.startsWith("python") && !entryPoint) {
+        const readmeEntryPoint = readmeParser.extractEntryPointFromReadme(readmeContent);
+        if (readmeEntryPoint) {
+          try {
+            await readFile(path.join(installDir, readmeEntryPoint));
+            entryPoint = readmeEntryPoint;
+            debugLog(`Found entry point from README: ${entryPoint}`);
+          } catch {}
+        }
+      }
+
       envVars = readmeParser.extractEnvFromReadme(readmeContent);
       mcpJsonResult = readmeParser.extractPythonMcpJsonAndInstall(readmeContent);
       if (envVars) {

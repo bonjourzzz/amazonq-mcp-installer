@@ -216,4 +216,22 @@ export class ReadmeParser {
     return null;
   }
 
+
+  /**
+   * Extract entry point file name from README configuration examples
+   */
+  extractEntryPointFromReadme(readmeContent: string): string | null {
+    debugLog('Extracting entry point from README...');
+    
+    if (!readmeContent) return null;
+
+    // Look for Python files in args arrays
+    const pythonMatch = readmeContent.match(/"args"[^[]*\[[^]]*"[^"]*([^/\\]+\.py)"/);
+    if (pythonMatch && pythonMatch[1]) {
+      debugLog(`Found Python entry point in README: ${pythonMatch[1]}`);
+      return pythonMatch[1];
+    }
+
+    return null;
+  }
 }
