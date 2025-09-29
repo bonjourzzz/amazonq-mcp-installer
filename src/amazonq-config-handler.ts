@@ -101,9 +101,9 @@ export class AmazonQConfigHandler {
         if (permissionMode === 'alwaysAllow' && config.availableTools) {
           // Always Allow mode: add specific tools to allowedTools
           config.availableTools.forEach(toolName => {
-            // Handle special @modelcontextprotocol/server-name format
-            const allowedToolRef = serverName.startsWith('@') 
-              ? `${serverName}/${toolName}`  // @modelcontextprotocol/server-name/toolName (no extra @)
+            // Amazon Q expects double @ for @modelcontextprotocol servers  
+            const allowedToolRef = serverName.startsWith('@')
+              ? `@@${serverName}/${toolName}`  // @@modelcontextprotocol/server-name/toolName
               : `@${serverName}/${toolName}`; // @serverName/toolName
             
             if (!fullConfig.allowedTools.includes(allowedToolRef)) {
