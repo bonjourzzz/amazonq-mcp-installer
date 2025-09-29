@@ -93,7 +93,7 @@ export class AmazonQConfigHandler {
         this.removeServerFromTools(fullConfig, serverName);
       } else {
         // Ask or Always Allow mode: add server reference
-        const toolRef = `@${serverName}`;
+        const toolRef = serverName.startsWith('@') ? serverName : `@${serverName}`;
         if (!fullConfig.tools.includes(toolRef)) {
           fullConfig.tools.push(toolRef);
         }
@@ -242,7 +242,7 @@ export class AmazonQConfigHandler {
         this.removeServerFromTools(fullConfig, serverName);
       } else {
         // Ask or Always Allow mode
-        const toolRef = `@${serverName}`;
+        const toolRef = serverName.startsWith('@') ? serverName : `@${serverName}`;
         if (!fullConfig.tools.includes(toolRef)) {
           fullConfig.tools.push(toolRef);
         }
