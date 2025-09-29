@@ -174,10 +174,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new McpError(ErrorCode.InvalidRequest, 'Missing search query');
         }
 
-        // Get token from environment
-        const github_token = process.env.GITHUB_TOKEN;
+        // Get token from environment or config file
+        let github_token = process.env.GITHUB_TOKEN;
         if (!github_token) {
-          throw new McpError(ErrorCode.InvalidRequest, 'GitHub token not found in environment. Please set GITHUB_TOKEN in your MCP server config.');
+          try {
+            const fs = require('fs');
+            const path = require('path');
+            const configPath = path.join(__dirname, '..', 'mcp_configs.json');
+            const configData = fs.readFileSync(configPath, 'utf8');
+            const config = JSON.parse(configData);
+            github_token = config.GITHUB_TOKEN;
+          } catch (error) {
+            // Config file not found or invalid
+          }
+        }
+        
+        if (!github_token) {
+          throw new McpError(ErrorCode.InvalidRequest, 'GitHub token not found. Please set GITHUB_TOKEN in environment or mcp_configs.json.');
         }
 
         try {

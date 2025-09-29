@@ -63,12 +63,19 @@ export type InstallResult = {
   env?: { [key: string]: string };
 };
 
-export async function installMcpServer(repoUrl: string): Promise<InstallResult> {
+export async function installMcpServer(
+  repoUrl: string, 
+  options?: {
+    permissionMode?: 'ask' | 'alwaysAllow' | 'deny';
+    discoverTools?: boolean;
+  }
+): Promise<InstallResult> {
   // Get Amazon Q MCP paths
   const { basePath } = ensureAmazonQMcpStructure();
   const configHandler = new AmazonQConfigHandler();
   debugLog(`Starting installation for repository: ${repoUrl}`);
-
+  // Default options
+  const { permissionMode = 'ask', discoverTools = false } = options || {};
   // Check dependencies with version requirements
   let hasNode = await hasNodeJs();
   const hasPython = await hasUvx();

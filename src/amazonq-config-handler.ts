@@ -41,6 +41,8 @@ export class AmazonQConfigHandler {
     command: string;
     args: string[];
     env?: { [key: string]: string };
+    permissionMode?: 'ask' | 'alwaysAllow' | 'deny';
+    availableTools?: string[];
   }): void {
     debugLog(`Updating Amazon Q config at: ${this.configPath}`);
 
@@ -53,19 +55,25 @@ export class AmazonQConfigHandler {
       const existingConfig = readFileSync(this.configPath, 'utf8');
       const fullConfig: AmazonQConfig = JSON.parse(existingConfig);
 
-      // Format Windows paths with proper escaping for Amazon Q
+      // Format Windows paths with proper escaping (2 backslashes, not 4)
       const formattedArgs = config.args.map(arg => {
         if (typeof arg === 'string' && process.platform === 'win32') {
-          return arg.replace(/\\/g, '\\\\\\\\');
+          return arg.replace(/\\/g, '\\\\');
         }
         return arg;
       });
 
       // Create server config according to Amazon Q rules
+      // Special timeout handling for memory-intensive servers
+      let timeout = 60000; // Default timeout
+      if (serverName.includes('mem0') || serverName.includes('memory')) {
+        timeout = 180000; // 3 minutes for memory-intensive servers
+      }
+
       const serverConfig: AmazonQServerConfig = {
         command: config.command,
         disabled: false,
-        timeout: 60000,
+        timeout: timeout,
         args: formattedArgs
       };
 
@@ -77,29 +85,70 @@ export class AmazonQConfigHandler {
       // Update mcpServers
       fullConfig.mcpServers[serverName] = serverConfig;
 
-      // Add to tools array if not present
-      const toolRef = `@${serverName}`;
-      if (!fullConfig.tools.includes(toolRef)) {
-        fullConfig.tools.push(toolRef);
-      }
+      // Configure permissions based on mode
+      const permissionMode = config.permissionMode || 'ask';
+      
+      if (permissionMode === 'deny') {
+        // Deny mode: remove all references
+        this.removeServerFromTools(fullConfig, serverName);
+      } else {
+        // Ask or Always Allow mode: add server reference
+        const toolRef = `@${serverName}`;
+        if (!fullConfig.tools.includes(toolRef)) {
+          fullConfig.tools.push(toolRef);
+        }
 
-      // Add to allowedTools with wildcard permission
-      const allowedToolRef = `@${serverName}/*`;
-      if (!fullConfig.allowedTools.includes(allowedToolRef)) {
-        fullConfig.allowedTools.push(allowedToolRef);
+        if (permissionMode === 'alwaysAllow' && config.availableTools) {
+          // Always Allow mode: add specific tools to allowedTools
+          config.availableTools.forEach(toolName => {
+            // Handle special @modelcontextprotocol/server-name format
+            const allowedToolRef = serverName.startsWith('@') 
+              ? `@${serverName}/${toolName}`  // @@modelcontextprotocol/server-name/toolName
+              : `@${serverName}/${toolName}`; // @serverName/toolName
+            
+            if (!fullConfig.allowedTools.includes(allowedToolRef)) {
+              fullConfig.allowedTools.push(allowedToolRef);
+            }
+          });
+        } else if (permissionMode === 'ask') {
+          // Ask mode: remove from allowedTools (keep only in tools)
+          const serverPrefix = serverName.startsWith('@') ? `@${serverName}/` : `@${serverName}/`;
+          const wildcardRef = serverName.startsWith('@') ? `@${serverName}/*` : `@${serverName}/*`;
+          
+          fullConfig.allowedTools = fullConfig.allowedTools.filter(tool => 
+            !tool.startsWith(serverPrefix) && tool !== wildcardRef
+          );
+        }
       }
 
       // Write back to file
       writeFileSync(this.configPath, JSON.stringify(fullConfig, null, 2), 'utf8');
 
       debugLog('Successfully updated Amazon Q config');
-      debugLog(`Added server: ${serverName}`);
+      debugLog(`Added server: ${serverName} with permission mode: ${permissionMode}`);
       debugLog(`Config: ${JSON.stringify(serverConfig, null, 2)}`);
 
     } catch (error) {
       debugLog(`Failed to update Amazon Q config: ${error instanceof Error ? error.message : String(error)}`);
       throw new Error(`Failed to update Amazon Q config: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  /**
+   * Remove server references from tools and allowedTools arrays
+   */
+  private removeServerFromTools(config: AmazonQConfig, serverName: string): void {
+    // Remove from tools array
+    const toolRef = `@${serverName}`;
+    config.tools = config.tools.filter(tool => tool !== toolRef);
+
+    // Remove from allowedTools - handle both normal and @modelcontextprotocol formats
+    const serverPrefix = serverName.startsWith('@') ? `@${serverName}/` : `@${serverName}/`;
+    const wildcardRef = serverName.startsWith('@') ? `@${serverName}/*` : `@${serverName}/*`;
+    
+    config.allowedTools = config.allowedTools.filter(tool => 
+      !tool.startsWith(serverPrefix) && tool !== wildcardRef
+    );
   }
 
   /**
@@ -119,15 +168,8 @@ export class AmazonQConfigHandler {
       // Remove from mcpServers
       delete fullConfig.mcpServers[serverName];
 
-      // Remove from tools array
-      const toolRef = `@${serverName}`;
-      fullConfig.tools = fullConfig.tools.filter(tool => tool !== toolRef);
-
-      // Remove from allowedTools
-      const allowedToolRef = `@${serverName}/*`;
-      fullConfig.allowedTools = fullConfig.allowedTools.filter(tool => 
-        tool !== allowedToolRef && !tool.startsWith(`@${serverName}/`)
-      );
+      // Remove from tools and allowedTools
+      this.removeServerFromTools(fullConfig, serverName);
 
       // Write back to file
       writeFileSync(this.configPath, JSON.stringify(fullConfig, null, 2), 'utf8');
@@ -137,6 +179,98 @@ export class AmazonQConfigHandler {
     } catch (error) {
       debugLog(`Failed to remove server from Amazon Q config: ${error instanceof Error ? error.message : String(error)}`);
       throw new Error(`Failed to remove server from Amazon Q config: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Discover available tools from an MCP server by attempting to connect
+   */
+  async discoverServerTools(serverName: string): Promise<string[]> {
+    debugLog(`Attempting to discover tools for server: ${serverName}`);
+    
+    try {
+      // Read current config to get server details
+      if (!existsSync(this.configPath)) {
+        debugLog('Config file not found, cannot discover tools');
+        return [];
+      }
+
+      const config = JSON.parse(readFileSync(this.configPath, 'utf8'));
+      const serverConfig = config.mcpServers[serverName];
+      
+      if (!serverConfig) {
+        debugLog(`Server ${serverName} not found in config`);
+        return [];
+      }
+
+      // Import tool discovery function
+      const { discoverMcpServerTools } = await import('./tool-discovery.js');
+      
+      // Attempt to discover tools by starting the server
+      const tools = await discoverMcpServerTools(
+        serverConfig.command,
+        serverConfig.args,
+        serverConfig.env,
+        serverConfig.timeout || 10000
+      );
+      
+      debugLog(`Discovered ${tools.length} tools for ${serverName}: ${tools.join(', ')}`);
+      return tools;
+      
+    } catch (error) {
+      debugLog(`Failed to discover tools for ${serverName}: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Update server permission mode
+   */
+  updateServerPermissions(serverName: string, mode: 'ask' | 'alwaysAllow' | 'deny', availableTools?: string[]): void {
+    debugLog(`Updating permissions for ${serverName} to ${mode}`);
+
+    try {
+      if (!existsSync(this.configPath)) {
+        throw new Error(`Amazon Q config file not found at: ${this.configPath}`);
+      }
+
+      const existingConfig = readFileSync(this.configPath, 'utf8');
+      const fullConfig: AmazonQConfig = JSON.parse(existingConfig);
+
+      if (mode === 'deny') {
+        // Deny mode: remove all references
+        this.removeServerFromTools(fullConfig, serverName);
+      } else {
+        // Ask or Always Allow mode
+        const toolRef = `@${serverName}`;
+        if (!fullConfig.tools.includes(toolRef)) {
+          fullConfig.tools.push(toolRef);
+        }
+
+        if (mode === 'alwaysAllow' && availableTools) {
+          // Always Allow: add specific tools to allowedTools
+          availableTools.forEach(toolName => {
+            const allowedToolRef = `@${serverName}/${toolName}`;
+            if (!fullConfig.allowedTools.includes(allowedToolRef)) {
+              fullConfig.allowedTools.push(allowedToolRef);
+            }
+          });
+        } else if (mode === 'ask') {
+          // Ask mode: remove from allowedTools
+          fullConfig.allowedTools = fullConfig.allowedTools.filter(tool => 
+            !tool.startsWith(`@${serverName}/`) && tool !== `@${serverName}/*`
+          );
+        }
+      }
+
+      // Write back to file
+      writeFileSync(this.configPath, JSON.stringify(fullConfig, null, 2), 'utf8');
+
+      debugLog(`Successfully updated permissions for ${serverName}`);
+
+    } catch (error) {
+      debugLog(`Failed to update permissions: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Failed to update permissions: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
