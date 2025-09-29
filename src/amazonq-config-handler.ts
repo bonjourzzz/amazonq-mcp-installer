@@ -103,7 +103,7 @@ export class AmazonQConfigHandler {
           config.availableTools.forEach(toolName => {
             // Amazon Q expects double @ for @modelcontextprotocol servers  
             const allowedToolRef = serverName.startsWith('@')
-              ? `@@${serverName}/${toolName}`  // @@modelcontextprotocol/server-name/toolName
+              ? `@${serverName}/${toolName}`  // @@modelcontextprotocol/server-name/toolName
               : `@${serverName}/${toolName}`; // @serverName/toolName
             
             if (!fullConfig.allowedTools.includes(allowedToolRef)) {
