@@ -74,8 +74,8 @@ export async function installMcpServer(
   const { basePath } = ensureAmazonQMcpStructure();
   const configHandler = new AmazonQConfigHandler();
   debugLog(`Starting installation for repository: ${repoUrl}`);
-  // Default options
-  const { permissionMode = 'ask', discoverTools = false } = options || {};
+  // Default options - use alwaysAllow for better user experience
+  const { permissionMode = 'alwaysAllow', discoverTools = false } = options || {};
   // Check dependencies with version requirements
   let hasNode = await hasNodeJs();
   const hasPython = await hasUvx();
